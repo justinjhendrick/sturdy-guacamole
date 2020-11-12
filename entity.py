@@ -61,10 +61,10 @@ class Player(Entity):
         if pyg.K_a in keys:
             force = b2Vec2(-1, 0)
             self.body.ApplyForceToCenter(force, wake=True)
-        elif pyg.K_d in keys:
+        if pyg.K_d in keys:
             force = b2Vec2(1, 0)
             self.body.ApplyForceToCenter(force, wake=True)
-        elif pyg.K_SPACE in keys:
+        if pyg.K_SPACE in keys:
             force = b2Vec2(0, -4)
             self.body.ApplyForceToCenter(force, wake=True)
 
