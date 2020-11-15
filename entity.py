@@ -159,10 +159,10 @@ class Player(Entity):
         '''
         light_half_deg = 15
         light_half_rad = light_half_deg * math.pi / 180
-        light_density_deg = 0.4
-        light_density_rad = light_density_deg * math.pi / 180
+        light_step_deg = 0.4
+        light_step_rad = light_step_deg * math.pi / 180
 
-        for delta_angle in utils.float_range(-light_half_rad, light_half_rad, light_density_rad):
+        for delta_angle in utils.float_range(-light_half_rad, light_half_rad, light_step_rad):
             # gather necessary data
             player_x_p = self.x() * PIXELS_PER_METER
             player_y_p = self.y() * PIXELS_PER_METER
