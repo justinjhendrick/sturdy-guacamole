@@ -4,7 +4,7 @@ from Box2D import *
 import pygame as pyg
 
 from constants import *
-from utils import float_range
+import utils
 
 # Entity is an abstract class
 class Entity:
@@ -33,7 +33,17 @@ class Entity:
         width_p = self.width() * PIXELS_PER_METER
         height_p = self.height() * PIXELS_PER_METER
         r = pyg.Rect(left_p, top_p, width_p, height_p)
-        pyg.draw.rect(screen, self.color(), r)
+        width = 0 if self.draw_fill() else 1
+        pyg.draw.rect(screen, self.color(), r, width=width)
+
+    def custom_draw(self, screen):
+        return False
+
+    def is_static(self):
+        return True
+
+    def draw_fill(self):
+        return True
 
     # meters
     def x(self):
@@ -50,8 +60,28 @@ class Wall(Entity):
         self.h = height
         super().__init__(engine)
 
-    def is_static(self):
-        return True
+    # meters
+    def init_pos(self):
+        return self.position
+
+    # meters
+    def width(self):
+        return self.w
+
+    # meters
+    def height(self):
+        return self.h
+
+    def color(self):
+        return GREY
+
+class Goal(Entity):
+    def __init__(self, engine, x, y, width, height):
+        self.position = (x, y)
+        self.w = width
+        self.h = height
+        super().__init__(engine)
+        self.body.userData = "GOAL"
 
     # meters
     def init_pos(self):
@@ -66,10 +96,7 @@ class Wall(Entity):
         return self.h
 
     def color(self):
-        return BLACK
-
-    def custom_draw(self, screen):
-        return False
+        return BLUE
 
 class Player(Entity):
     def is_static(self):
@@ -77,35 +104,53 @@ class Player(Entity):
 
     # meters
     def init_pos(self):
-        x_m = (SCREEN_WIDTH * METERS_PER_PIXEL) / 2.0
-        return x_m, self.height() / 2
+        x_m = (SCREEN_WIDTH - 20) * METERS_PER_PIXEL
+        y_m = (SCREEN_HEIGHT - 20) * METERS_PER_PIXEL
+        return (x_m, y_m)
 
     # meters
     def width(self):
-        return 1
+        return 0.5
 
     # meters
     def height(self):
-        return 1
+        return 0.5
 
     def color(self):
         return WHITE
 
     def step(self, keys):
+        if self.touch_goal():
+            return True
         if pyg.K_a in keys:
             force = b2Vec2(-1, 0)
             self.body.ApplyForceToCenter(force, wake=True)
         if pyg.K_d in keys:
             force = b2Vec2(1, 0)
             self.body.ApplyForceToCenter(force, wake=True)
-        if pyg.K_SPACE in keys:
-            force = b2Vec2(0, -4)
-            self.body.ApplyForceToCenter(force, wake=True)
+        if pyg.K_SPACE in keys and self.can_jump():
+            impulse = b2Vec2(0, -1.5)
+            self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, wake=True)
 
         vel = self.body.linearVelocity
         speed = vel.length
         drag = DRAG_COEFF * speed * -vel
         self.body.ApplyForceToCenter(drag, wake=True)
+        return False
+    
+    def can_jump(self):
+        for edge in self.body.contacts:
+            c = edge.contact
+            if c.touching and utils.vectors_close(c.worldManifold.normal, b2Vec2(0, 1)):
+                return True
+        return False
+
+    def touch_goal(self):
+        for edge in self.body.contacts:
+            c = edge.contact
+            if c.touching and edge.other.userData == "GOAL":
+                return True
+        return False
 
     def custom_draw(self, screen):
         '''
@@ -114,10 +159,10 @@ class Player(Entity):
         '''
         light_half_deg = 15
         light_half_rad = light_half_deg * math.pi / 180
-        light_density_deg = 0.5
+        light_density_deg = 0.4
         light_density_rad = light_density_deg * math.pi / 180
 
-        for delta_angle in float_range(-light_half_rad, light_half_rad, light_density_rad):
+        for delta_angle in utils.float_range(-light_half_rad, light_half_rad, light_density_rad):
             # gather necessary data
             player_x_p = self.x() * PIXELS_PER_METER
             player_y_p = self.y() * PIXELS_PER_METER
@@ -156,4 +201,7 @@ class Player(Entity):
 
             # draw
             pyg.draw.line(screen, YELLOW, player_pos_p, ray_end_p)
-        return True
+        return False
+
+    def draw_fill(self):
+        return False

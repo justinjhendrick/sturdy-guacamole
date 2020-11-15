@@ -26,7 +26,8 @@ def main():
                 keys.discard(event.key)
 
         # simulate
-        world.step(keys)
+        if world.step(keys):
+            return
 
         # draw
         screen.fill(BLACK)
