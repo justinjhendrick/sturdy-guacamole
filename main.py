@@ -1,3 +1,4 @@
+import argparse
 import sys
 import time
 
@@ -6,12 +7,26 @@ import pygame as pyg
 from constants import *
 from world import World
 
+def screen_size(args):
+    w = SCREEN_WIDTH
+    h = SCREEN_HEIGHT
+    if args.map_editor:
+        w += EDITOR_BORDER * 2
+        h += EDITOR_BORDER * 2
+    return (w, h)
+
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--map-editor", help="launch editor for building maps", action="store_true")
+    parser.add_argument("--debug", help="turn on the lights", action="store_true")
+    parser.add_argument("--map-file", help="a json file that specifies a map", required=True)
+    args = parser.parse_args()
+
     # IO engine
     pyg.init()
 
-    world = World()
-    screen = pyg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    world = World(args)
+    screen = pyg.display.set_mode(screen_size(args))
 
     prev_time_s = time.time()
     keys = set()

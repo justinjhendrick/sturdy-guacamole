@@ -54,11 +54,12 @@ class Entity:
         return self.body.position.y
 
 class Wall(Entity):
-    def __init__(self, engine, x, y, width, height):
+    def __init__(self, engine, x, y, width, height, name):
         self.position = (x, y)
         self.w = width
         self.h = height
         super().__init__(engine)
+        self.body.userData = name
 
     # meters
     def init_pos(self):
@@ -75,26 +76,7 @@ class Wall(Entity):
     def color(self):
         return GREY
 
-class Goal(Entity):
-    def __init__(self, engine, x, y, width, height):
-        self.position = (x, y)
-        self.w = width
-        self.h = height
-        super().__init__(engine)
-        self.body.userData = "GOAL"
-
-    # meters
-    def init_pos(self):
-        return self.position
-
-    # meters
-    def width(self):
-        return self.w
-
-    # meters
-    def height(self):
-        return self.h
-
+class Goal(Wall):
     def color(self):
         return BLUE
 
@@ -148,7 +130,8 @@ class Player(Entity):
     def touch_goal(self):
         for edge in self.body.contacts:
             c = edge.contact
-            if c.touching and edge.other.userData == "GOAL":
+            if c.touching and edge.other.userData == "goal":
+                print("YOU WIN")
                 return True
         return False
 
