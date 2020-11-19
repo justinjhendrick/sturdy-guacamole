@@ -8,36 +8,36 @@ import utils
 
 # Entity is an abstract class
 class Entity:
-    def __init__(self, engine):
-        self.engine = engine
+    def __init__(self, world, name):
+        self.world = world
         box = (self.width() / 2, self.height() / 2)
         if self.is_static():
-            self.body = engine.CreateStaticBody(
+            self.body = self.world.engine.CreateStaticBody(
                 position=self.init_pos(),
                 shapes=b2PolygonShape(box=box),
                 )
         else:
-            self.body = engine.CreateDynamicBody(
+            self.body = self.world.engine.CreateDynamicBody(
                 position=self.init_pos(),
                 shapes=b2PolygonShape(box=box),
                 )
+        self.body.userData = name
 
     def draw(self, screen):
-        if self.custom_draw(screen):
-            return
+        self.custom_draw(screen)
         left_m = self.x() - self.width() / 2
-        left_p = left_m * PIXELS_PER_METER
+        left_p = left_m * self.world.pixels_per_meter
         top_m = self.y() - self.height() / 2
-        top_p = top_m * PIXELS_PER_METER
+        top_p = top_m * self.world.pixels_per_meter
 
-        width_p = self.width() * PIXELS_PER_METER
-        height_p = self.height() * PIXELS_PER_METER
+        width_p = self.width() * self.world.pixels_per_meter
+        height_p = self.height() * self.world.pixels_per_meter
         r = pyg.Rect(left_p, top_p, width_p, height_p)
         width = 0 if self.draw_fill() else 1
         pyg.draw.rect(screen, self.color(), r, width=width)
 
     def custom_draw(self, screen):
-        return False
+        pass
 
     def is_static(self):
         return True
@@ -54,12 +54,11 @@ class Entity:
         return self.body.position.y
 
 class Wall(Entity):
-    def __init__(self, engine, x, y, width, height, name):
+    def __init__(self, world, name, x, y, width, height):
         self.position = (x, y)
         self.w = width
         self.h = height
-        super().__init__(engine)
-        self.body.userData = name
+        super().__init__(world, name)
 
     # meters
     def init_pos(self):
@@ -81,22 +80,26 @@ class Goal(Wall):
         return BLUE
 
 class Player(Entity):
+    def __init__(self, world, name, x, y, width, height):
+        self.init_position = (x, y)
+        self.w = width
+        self.h = height
+        super().__init__(world, name)
+
     def is_static(self):
         return False
 
     # meters
     def init_pos(self):
-        x_m = (SCREEN_WIDTH - 20) * METERS_PER_PIXEL
-        y_m = (SCREEN_HEIGHT - 20) * METERS_PER_PIXEL
-        return (x_m, y_m)
+        return self.init_position
 
     # meters
     def width(self):
-        return 0.5
+        return self.w
 
     # meters
     def height(self):
-        return 0.5
+        return self.h
 
     def color(self):
         return WHITE
@@ -123,8 +126,17 @@ class Player(Entity):
     def can_jump(self):
         for edge in self.body.contacts:
             c = edge.contact
-            if c.touching and utils.vectors_close(c.worldManifold.normal, b2Vec2(0, 1)):
-                return True
+            if c.touching:
+                # Box2D convention: the normal points from fixtureA to fixtureB.
+                if c.fixtureA.body == self.body:
+                    nominal_vector = b2Vec2(0, 1)
+                elif c.fixtureB.body == self.body:
+                    nominal_vector = b2Vec2(0, -1)
+                else:
+                    raise Exception("WTF?")
+
+                if utils.vectors_close(c.worldManifold.normal, nominal_vector):
+                    return True
         return False
 
     def touch_goal(self):
@@ -138,7 +150,7 @@ class Player(Entity):
     def custom_draw(self, screen):
         '''
         Draw the flashlight from the player to the first object hit.
-        Do this with many rays
+        Do this with many rays. Use the physics engine to find the end of each ray.
         '''
         light_half_deg = 15
         light_half_rad = light_half_deg * math.pi / 180
@@ -147,8 +159,8 @@ class Player(Entity):
 
         for delta_angle in utils.float_range(-light_half_rad, light_half_rad, light_step_rad):
             # gather necessary data
-            player_x_p = self.x() * PIXELS_PER_METER
-            player_y_p = self.y() * PIXELS_PER_METER
+            player_x_p = self.x() * self.world.pixels_per_meter
+            player_y_p = self.y() * self.world.pixels_per_meter
             player_pos_p = (player_x_p, player_y_p)
             mouse_pos_p = pyg.mouse.get_pos()
             mouse_x_p = mouse_pos_p[0]
@@ -172,15 +184,15 @@ class Player(Entity):
                         return fraction
 
             ray = RayCastCallback()
-            player_pos_m = (player_pos_p[0] * METERS_PER_PIXEL, player_pos_p[1] * METERS_PER_PIXEL)
-            ray_dir_m = (ray_dir[0] * METERS_PER_PIXEL, ray_dir[1] * METERS_PER_PIXEL)
-            self.engine.RayCast(ray, player_pos_m, ray_dir_m)
+            player_pos_m = (player_pos_p[0] * self.world.meters_per_pixel, player_pos_p[1] * self.world.meters_per_pixel)
+            ray_dir_m = (ray_dir[0] * self.world.meters_per_pixel, ray_dir[1] * self.world.meters_per_pixel)
+            self.world.engine.RayCast(ray, player_pos_m, ray_dir_m)
             if ray.end_point_m == None:
                 # Didn't hit anything. Draw to end of screen
                 ray_end_p = ray_dir
             else:
                 # Hit something. Stop drawing ray there
-                ray_end_p = (ray.end_point_m[0] * PIXELS_PER_METER, ray.end_point_m[1] * PIXELS_PER_METER)
+                ray_end_p = (ray.end_point_m[0] * self.world.pixels_per_meter, ray.end_point_m[1] * self.world.pixels_per_meter)
 
             # draw
             pyg.draw.line(screen, YELLOW, player_pos_p, ray_end_p)
