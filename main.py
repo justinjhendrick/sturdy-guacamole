@@ -6,6 +6,7 @@ import pygame as pyg
 
 from constants import *
 from world import World
+from editor import Editor
 
 def screen_size(args):
     w = SCREEN_WIDTH
@@ -27,6 +28,9 @@ def main():
 
     world = World(args)
     screen = pyg.display.set_mode(screen_size(args))
+    editor = None
+    if args.map_editor:
+        editor = Editor(args)
 
     prev_time_s = time.time()
     keys = set()
@@ -39,6 +43,11 @@ def main():
                 keys.add(event.key)
             elif event.type == pyg.KEYUP:
                 keys.discard(event.key)
+            if editor != None:
+                should_reload = editor.handle(event, screen)
+                if should_reload:
+                    world = World(args)
+        
 
         # simulate
         if world.step(keys):

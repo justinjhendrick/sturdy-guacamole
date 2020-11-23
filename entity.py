@@ -10,7 +10,7 @@ import utils
 class Entity:
     def __init__(self, world, name):
         self.world = world
-        box = (self.width() / 2, self.height() / 2)
+        box = (self.w_half(), self.h_half())
         if self.is_static():
             self.body = self.world.engine.CreateStaticBody(
                 position=self.init_pos(),
@@ -25,13 +25,13 @@ class Entity:
 
     def draw(self, screen):
         self.custom_draw(screen)
-        left_m = self.x() - self.width() / 2
-        left_p = left_m * self.world.pixels_per_meter
-        top_m = self.y() - self.height() / 2
-        top_p = top_m * self.world.pixels_per_meter
+        left_m = self.x_center() - self.w_half()
+        left_p = self.world.to_pixels(left_m)
+        top_m = self.y_center() - self.h_half()
+        top_p = self.world.to_pixels(top_m)
 
-        width_p = self.width() * self.world.pixels_per_meter
-        height_p = self.height() * self.world.pixels_per_meter
+        width_p = self.world.to_pixels(self.w_half() * 2, is_position=False)
+        height_p = self.world.to_pixels(self.h_half() * 2, is_position=False)
         r = pyg.Rect(left_p, top_p, width_p, height_p)
         width = 0 if self.draw_fill() else 1
         pyg.draw.rect(screen, self.color(), r, width=width)
@@ -46,11 +46,11 @@ class Entity:
         return True
 
     # meters
-    def x(self):
+    def x_center(self):
         return self.body.position.x
 
     # meters
-    def y(self):
+    def y_center(self):
         return self.body.position.y
 
 class Wall(Entity):
@@ -65,11 +65,11 @@ class Wall(Entity):
         return self.position
 
     # meters
-    def width(self):
+    def w_half(self):
         return self.w
 
     # meters
-    def height(self):
+    def h_half(self):
         return self.h
 
     def color(self):
@@ -94,11 +94,11 @@ class Player(Entity):
         return self.init_position
 
     # meters
-    def width(self):
+    def w_half(self):
         return self.w
 
     # meters
-    def height(self):
+    def h_half(self):
         return self.h
 
     def color(self):
@@ -159,8 +159,8 @@ class Player(Entity):
 
         for delta_angle in utils.float_range(-light_half_rad, light_half_rad, light_step_rad):
             # gather necessary data
-            player_x_p = self.x() * self.world.pixels_per_meter
-            player_y_p = self.y() * self.world.pixels_per_meter
+            player_x_p = self.world.to_pixels(self.x_center())
+            player_y_p = self.world.to_pixels(self.y_center())
             player_pos_p = (player_x_p, player_y_p)
             mouse_pos_p = pyg.mouse.get_pos()
             mouse_x_p = mouse_pos_p[0]
@@ -184,15 +184,15 @@ class Player(Entity):
                         return fraction
 
             ray = RayCastCallback()
-            player_pos_m = (player_pos_p[0] * self.world.meters_per_pixel, player_pos_p[1] * self.world.meters_per_pixel)
-            ray_dir_m = (ray_dir[0] * self.world.meters_per_pixel, ray_dir[1] * self.world.meters_per_pixel)
+            player_pos_m = (self.world.to_meters(player_pos_p[0]), self.world.to_meters(player_pos_p[1]))
+            ray_dir_m = (self.world.to_meters(ray_dir[0]), self.world.to_meters(ray_dir[1]))
             self.world.engine.RayCast(ray, player_pos_m, ray_dir_m)
             if ray.end_point_m == None:
                 # Didn't hit anything. Draw to end of screen
                 ray_end_p = ray_dir
             else:
                 # Hit something. Stop drawing ray there
-                ray_end_p = (ray.end_point_m[0] * self.world.pixels_per_meter, ray.end_point_m[1] * self.world.pixels_per_meter)
+                ray_end_p = (self.world.to_pixels(ray.end_point_m[0]), self.world.to_pixels(ray.end_point_m[1]))
 
             # draw
             pyg.draw.line(screen, YELLOW, player_pos_p, ray_end_p)

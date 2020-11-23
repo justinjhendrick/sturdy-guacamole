@@ -18,11 +18,11 @@ class World:
         self.dynamics = []
         self.goals = []
         self.statics = []
-        with open(self.args.map_file) as f:
+        with open(self.args.map_file, mode='r') as f:
             top = json.loads(f.read())
             width_m = top['width']
-            self.pixels_per_meter = SCREEN_WIDTH / width_m
-            self.meters_per_pixel = 1.0 / self.pixels_per_meter
+            self._pixels_per_meter = SCREEN_WIDTH / width_m
+            self._meters_per_pixel = 1.0 / self._pixels_per_meter
             dynamics = top['dynamics']
             for dynamic in dynamics:
                 name = dynamic['name']
@@ -84,3 +84,15 @@ class World:
         for goal in self.goals:
             goal.draw(screen)
         self.player.draw(screen)
+
+    def to_meters(self, pixels, is_position=True):
+        if is_position and self.args.map_editor:
+            pixels -= EDITOR_BORDER
+        meters = pixels * self._meters_per_pixel
+        return meters 
+
+    def to_pixels(self, meters, is_position=True):
+        pixels = meters * self._pixels_per_meter
+        if is_position and self.args.map_editor:
+            pixels += EDITOR_BORDER
+        return pixels
