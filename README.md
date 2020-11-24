@@ -11,9 +11,10 @@ $ pip install Box2D
 
 PLAY
 ----
-Use your mouse to point your flashlight and reach the blue square to win
+Reach the blue square to win!
 * A: move left
 * D: move right
+* SPACE: jump
 * mouse position: point flashlight
 
 ```
