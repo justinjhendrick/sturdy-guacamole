@@ -26,36 +26,39 @@ def main():
     # IO engine
     pyg.init()
 
-    world = World(args)
-    screen = pyg.display.set_mode(screen_size(args))
     editor = None
     if args.map_editor:
         editor = Editor(args)
+    world = World(args)
+    screen = pyg.display.set_mode(screen_size(args))
 
     prev_time_s = time.time()
     keys = set()
     while True:
         # take input
+        events = []
         for event in pyg.event.get():
+            events.append(event)
             if event.type == pyg.QUIT:
                 return
             elif event.type == pyg.KEYDOWN:
                 keys.add(event.key)
             elif event.type == pyg.KEYUP:
                 keys.discard(event.key)
-            if editor != None:
-                should_reload = editor.handle(event, screen)
-                if should_reload:
-                    world = World(args)
-        
 
         # simulate
+        if editor != None:
+            should_reload = editor.handle(events, screen)
+            if should_reload:
+                world = World(args)
         if world.step(keys):
             return
 
         # draw
         screen.fill(BLACK)
         world.draw(screen)
+        if editor != None:
+            editor.draw(screen)
         pyg.display.flip()
 
         # sleep

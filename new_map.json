@@ -1,0 +1,48 @@
+{
+  "width": 32,
+  "name": "new",
+  "statics": [
+    {
+      "name": "wall",
+      "type": "wall",
+      "x_center": -0.03999999999999998,
+      "y_center": 8.87,
+      "w_half": 0.30000000000000004,
+      "h_half": 9.35
+    },
+    {
+      "name": "wall",
+      "type": "wall",
+      "x_center": 15.96,
+      "y_center": 18.04,
+      "w_half": 16.16,
+      "h_half": 0.40000000000000036
+    },
+    {
+      "name": "wall",
+      "type": "wall",
+      "x_center": 16.169999999999998,
+      "y_center": 0.019999999999999962,
+      "w_half": 16.15,
+      "h_half": 0.48
+    },
+    {
+      "name": "wall",
+      "type": "wall",
+      "x_center": 31.990000000000002,
+      "y_center": 8.94,
+      "w_half": 0.40999999999999837,
+      "h_half": 9.02
+    }
+  ],
+  "dynamics": [
+    {
+      "name": "player",
+      "type": "player",
+      "x_center": 0,
+      "y_center": 0,
+      "w_half": 0.25,
+      "h_half": 0.25
+    }
+  ]
+}
