@@ -18,8 +18,10 @@ Reach the blue square to win!
 * mouse position: point flashlight
 
 ```
-python main.py --map-file stairs_map.json
+$ python main.py --map-file stairs_map.json
 ```
+
+`hello_map.json` is also available to play
 
 MAP EDITOR
 ------------
@@ -28,7 +30,7 @@ You can build your own maps for this game
 * Hold the `x` key, click to delete objects
 
 ```
-python main.py --map-file new_map.json --debug --map-editor
+$ python main.py --map-file new_map.json --debug --map-editor
 ```
 
 `new_map.json` only has walls around the edges and you can add more walls where you'd like. If you want to start a fresh map, choose a nonexistent file name that ends with "_map.json" and put it after `--map-file` in the above command.
